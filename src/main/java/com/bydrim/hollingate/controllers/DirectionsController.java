@@ -21,7 +21,7 @@ public class DirectionsController {
     @GetMapping("/directions")
     public String directions(Model model) {
 //        List<String> directions = List.of("test-1", "test-2");
-        model.addAttribute("directions", gatewayConfig.getDirections());
+        model.addAttribute("directions", gatewayConfig.directions());
         return "directions";
     }
 }
