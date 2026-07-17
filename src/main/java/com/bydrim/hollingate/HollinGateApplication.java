@@ -5,10 +5,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 @SpringBootApplication
 @ConfigurationPropertiesScan({ "com.bydrim.hollingate.configs" })
 public class HollinGateApplication {
