@@ -6,29 +6,73 @@ import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.cloud.gateway.server.mvc.predicate.GatewayRequestPredicates;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.FileUrlResource;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistration;
 import org.springframework.web.servlet.function.RouterFunction;
+import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
-import org.springframework.web.servlet.resource.ResourceHandlerUtils;
-import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import java.net.MalformedURLException;
+import java.nio.file.*;
+import java.util.Objects;
+import java.util.Optional;
 
 @Configuration
 public class RouteConfig {
     @Bean
-    public RouterFunction<ServerResponse> simpleRoute() throws MalformedURLException {
-        return GatewayRouterFunctions.route("router-id")
-//                .route(GatewayRequestPredicates.host("localhost:8080"), req -> ServerResponse.ok().body("HOST is " + req.headers().host()))
-//                .route(GatewayRequestPredicates.host("localhost:8080"), HandlerFunctions.http())
-                .resource(GatewayRequestPredicates.host("localhost:8080"), new FileUrlResource("/home/bydrim/Workspaces/bydrim-com/.output/public"))
-//                .before(BeforeFilterFunctions.uri("http://localhost:4040"))
-                .before(req -> {
-                    // req.param("tid");
-                    return req;
-                })
-                .build();
+    public RouterFunction<ServerResponse> routerFunction(GatewayConfig gatewayConfig) {
+        if (gatewayConfig.directions().isEmpty()) {
+            return req -> Optional.empty();
+        }
+
+        RouterFunction<ServerResponse> result = null;
+        for (GatewayConfig.Direction dir : gatewayConfig.directions()) {
+            final String routeId = Paths.get(dir.host(), dir.pathPrefix()).toString();
+            RouterFunction<ServerResponse> router = switch(dir.type()) {
+                case STATIC -> GatewayRouterFunctions
+                        .route(routeId)
+                        .resources((ServerRequest req) -> {
+                            try {
+                                FileSystem fs = FileSystems.getDefault();
+                                String host = Objects.requireNonNullElse(req.headers().firstHeader("HOST"), "");
+                                if (!fs.getPathMatcher("glob:" + dir.host()).matches(Path.of(host))) {
+                                    return Optional.empty();
+                                }
+
+                                String reqPath= req.path();
+                                reqPath = reqPath == null || reqPath.isBlank() ? "/" : reqPath;
+
+                                if (!reqPath.startsWith(dir.pathPrefix())) {
+                                    return Optional.empty();
+                                }
+
+                                reqPath = reqPath.substring(dir.pathPrefix().length());
+                                if (!fs.getPathMatcher("glob:/**.*").matches(Path.of(reqPath))) {
+                                    reqPath = Paths.get("/", reqPath, "index.html").toString();
+                                }
+
+                                return Optional.of(new FileUrlResource(Paths.get(dir.target(), reqPath).toUri().toURL()));
+                            } catch (MalformedURLException e) {
+                                return Optional.empty();
+                            }
+                        })
+                        .filter((request, next) -> next.handle(request))
+                        .build();
+                case PROXY -> {
+                    String pathGlob = Paths.get("/", dir.pathPrefix(), "/**").toString();
+                    String rewriteRegexp = Paths.get("/", dir.pathPrefix(), "(?<segment>.*)").toString();
+                    yield GatewayRouterFunctions
+                            .route(routeId)
+                            .route(GatewayRequestPredicates.host(dir.host()).and(GatewayRequestPredicates.path(pathGlob)), HandlerFunctions.http())
+                            .before(BeforeFilterFunctions.uri(dir.target()))
+                            .before(BeforeFilterFunctions.rewritePath(rewriteRegexp, "/${segment}"))
+                            .filter((request, next) -> next.handle(request))
+                            .build();
+                }
+            };
+
+            result = result == null ? router : result.and(router);
+        }
+
+        return result;
     }
 }
