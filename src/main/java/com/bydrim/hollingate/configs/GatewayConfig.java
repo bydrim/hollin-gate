@@ -7,5 +7,5 @@ import java.util.List;
 @ConfigurationProperties("gateway")
 public record GatewayConfig(List<Direction> directions) {
     public record Direction(RouteType type, String host, String pathPrefix, String target) {}
-    public enum RouteType { STATIC, PROXY }
+    public enum RouteType { STATIC, PROXY, SELF }
 }
