@@ -25,5 +25,5 @@ spring:
       ddl-auto: validate
 gg:
   jte:
-    #    usePrecompiledTemplates: true
-    developmentMode: true
+        use-precompiled-templates: true
+#    development-mode: true
