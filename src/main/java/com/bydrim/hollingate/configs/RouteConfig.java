@@ -8,13 +8,14 @@ import org.springframework.cloud.gateway.server.mvc.predicate.GatewayRequestPred
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileUrlResource;
+import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.io.File;
 import java.net.MalformedURLException;
-import java.nio.file.*;
-import java.util.Objects;
+import java.nio.file.Path;
 import java.util.Optional;
 
 @Configuration
@@ -27,32 +28,36 @@ public class RouteConfig {
 
         RouterFunction<ServerResponse> result = null;
         for (GatewayConfig.Direction dir : gatewayConfig.directions()) {
-            final String routeId = dir.type() + " - " + Paths.get(dir.host(), dir.pathPrefix());
+            final String routeId = dir.type() + " - " + Path.of(dir.host(), dir.pathPrefix());
 
             RouterFunction<ServerResponse> router = switch(dir.type()) {
                 case STATIC -> GatewayRouterFunctions
                         .route(routeId)
                         .resources((ServerRequest req) -> {
                             try {
-                                FileSystem fs = FileSystems.getDefault();
-                                String host = Objects.requireNonNullElse(req.headers().firstHeader("host"), "");
-                                if (!fs.getPathMatcher("glob:" + dir.host()).matches(Path.of(host))) {
+                                if (!hostPredicate(dir.host()).test(req)) {
                                     return Optional.empty();
                                 }
 
-                                String reqPath= req.path();
-                                reqPath = reqPath == null || reqPath.isBlank() ? "/" : reqPath;
-
-                                if (!reqPath.startsWith(dir.pathPrefix())) {
+                                String pathGlob = Path.of(dir.pathPrefix(), "/**").toString();
+                                if (!GatewayRequestPredicates.path(pathGlob).test(req)) {
                                     return Optional.empty();
                                 }
 
-                                reqPath = reqPath.substring(dir.pathPrefix().length());
-                                if (!fs.getPathMatcher("glob:/**.*").matches(Path.of(reqPath))) {
-                                    reqPath = Paths.get("/", reqPath, "index.html").toString();
-                                }
+                                String rewriteRegexp = dir.pathPrefix() + "(?<segment>.*)";
+                                req = BeforeFilterFunctions.rewritePath(rewriteRegexp, "${segment}").apply(req);
 
-                                return Optional.of(new FileUrlResource(Paths.get(dir.target(), reqPath).toUri().toURL()));
+                                File requestedFile = Path.of(dir.target(), req.uri().getPath()).toFile();
+                                if (!requestedFile.exists()) {
+                                    return Optional.empty();
+                                }
+                                else if (requestedFile.isDirectory()) {
+                                    // req = BeforeFilterFunctions.rewritePath("(?<segment>.*[^/])", "${segment}/index.html").apply(req);
+                                    return Optional.of(new FileUrlResource(requestedFile.toPath().resolve("index.html").toUri().toURL()));
+                                }
+                                else {
+                                    return Optional.of(new FileUrlResource(requestedFile.toURI().toURL()));
+                                }
                             } catch (MalformedURLException e) {
                                 return Optional.empty();
                             }
@@ -60,19 +65,19 @@ public class RouteConfig {
                         .filter((request, next) -> next.handle(request))
                         .build();
                 case PROXY -> {
-                    String pathGlob = Paths.get("/", dir.pathPrefix(), "/**").toString();
-                    String rewriteRegexp = Paths.get("/", dir.pathPrefix(), "(?<segment>.*)").toString();
+                    String pathGlob = Path.of(dir.pathPrefix(), "/**").toString();
+                    String rewriteRegexp = dir.pathPrefix() + "(?<segment>.*)";
                     yield GatewayRouterFunctions
                             .route(routeId)
-                            .route(GatewayRequestPredicates.host(dir.host()).and(GatewayRequestPredicates.path(pathGlob)), HandlerFunctions.http())
+                            .route(hostPredicate(dir.host()).and(GatewayRequestPredicates.path(pathGlob)), HandlerFunctions.http())
                             .before(BeforeFilterFunctions.uri(dir.target()))
-                            .before(BeforeFilterFunctions.rewritePath(rewriteRegexp, "/${segment}"))
+                            .before(BeforeFilterFunctions.rewritePath(rewriteRegexp, "${segment}"))
                             .filter((request, next) -> next.handle(request))
                             .build();
                 }
                 case SELF -> GatewayRouterFunctions
                         .route(routeId)
-                        .GET("/directions", GatewayRequestPredicates.host(dir.host()), directionsHandler::viewDirections)
+                        .GET("/directions", hostPredicate(dir.host()), directionsHandler::viewDirections)
                         .filter((request, next) -> next.handle(request))
                         .build();
             };
@@ -81,5 +86,19 @@ public class RouteConfig {
         }
 
         return result;
+    }
+
+    /**
+     * This implementation exists because 'RequestParameters.host' method tests using org.springframework.web.util.pattern.PathPattern
+     * and in that style there is no way to tell 'match all paths'. In that style, one has to include a path separator at least
+     * and host names like 'localhost:8080' can never be expressed in 'match all paths' string.
+     * @param host
+     * @return
+     */
+    private RequestPredicate hostPredicate(String host) {
+        if (null == host || host.isBlank() || host.equals("**")) {
+            return req -> true;
+        }
+        return GatewayRequestPredicates.host(host);
     }
 }
