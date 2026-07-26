@@ -8,7 +8,7 @@
 <p>Hello World!</p>
 <ul>
     @for(GatewayConfig.Direction dir : directions)
-        <li>${dir.host()} - ${dir.target()}</li>
+        <li>${String.join(", ", dir.hosts())} - ${dir.target()}</li>
     @endfor
 </ul>
 </body>

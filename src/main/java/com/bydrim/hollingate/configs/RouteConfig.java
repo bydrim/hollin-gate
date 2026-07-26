@@ -16,6 +16,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 @Configuration
@@ -28,14 +29,12 @@ public class RouteConfig {
 
         RouterFunction<ServerResponse> result = null;
         for (GatewayConfig.Direction dir : gatewayConfig.directions()) {
-            final String routeId = dir.type() + " - " + Path.of(dir.host(), dir.pathPrefix());
-
             RouterFunction<ServerResponse> router = switch(dir.type()) {
                 case STATIC -> GatewayRouterFunctions
-                        .route(routeId)
+                        .route(dir.toString())
                         .resources((ServerRequest req) -> {
                             try {
-                                if (!hostPredicate(dir.host()).test(req)) {
+                                if (!hostPredicate(dir.hosts()).test(req)) {
                                     return Optional.empty();
                                 }
 
@@ -68,16 +67,16 @@ public class RouteConfig {
                     String pathGlob = Path.of(dir.pathPrefix(), "/**").toString();
                     String rewriteRegexp = dir.pathPrefix() + "(?<segment>.*)";
                     yield GatewayRouterFunctions
-                            .route(routeId)
-                            .route(hostPredicate(dir.host()).and(GatewayRequestPredicates.path(pathGlob)), HandlerFunctions.http())
+                            .route(dir.toString())
+                            .route(hostPredicate(dir.hosts()).and(GatewayRequestPredicates.path(pathGlob)), HandlerFunctions.http())
                             .before(BeforeFilterFunctions.uri(dir.target()))
                             .before(BeforeFilterFunctions.rewritePath(rewriteRegexp, "${segment}"))
                             .filter((request, next) -> next.handle(request))
                             .build();
                 }
                 case SELF -> GatewayRouterFunctions
-                        .route(routeId)
-                        .GET("/directions", hostPredicate(dir.host()), directionsHandler::viewDirections)
+                        .route(dir.toString())
+                        .GET("/directions", hostPredicate(dir.hosts()), directionsHandler::viewDirections)
                         .filter((request, next) -> next.handle(request))
                         .build();
             };
@@ -95,10 +94,10 @@ public class RouteConfig {
      * @param host
      * @return
      */
-    private RequestPredicate hostPredicate(String host) {
-        if (null == host || host.isBlank() || host.equals("**")) {
+    private RequestPredicate hostPredicate(List<String> hosts) {
+        if (null == hosts || hosts.isEmpty() || hosts.stream().anyMatch(h -> h.isBlank() || h.equals("**"))) {
             return req -> true;
         }
-        return GatewayRequestPredicates.host(host);
+        return GatewayRequestPredicates.host(hosts.toArray(String[]::new));
     }
 }
