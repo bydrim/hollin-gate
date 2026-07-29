@@ -16,10 +16,13 @@ public record GatewayConfig(List<Direction> directions) {
             hosts = Objects.requireNonNullElse(hosts, Collections.emptyList());
             if (hosts.stream().anyMatch(h -> h.startsWith("https://") || h.startsWith("http://"))) {
                 throw new IllegalArgumentException(
-                        "'hosts' should contain only the addresses as glob and cannot include URL protocols such as 'https://' and 'http://'.");
+                        "A host should contain only the address as glob and cannot include URL protocols such as 'https://' and 'http://'.");
             }
 
             pathPrefix = Path.of("/", Objects.requireNonNullElse(pathPrefix, "")).toString();
+            if (pathPrefix.equals("/")) {
+                pathPrefix = "";
+            }
 
             target = Objects.requireNonNullElse(target, "");
             if (!type.equals(RouteType.SELF) && target.isBlank()) {
