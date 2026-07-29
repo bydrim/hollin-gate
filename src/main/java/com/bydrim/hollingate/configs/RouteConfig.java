@@ -76,7 +76,8 @@ public class RouteConfig {
                 }
                 case SELF -> GatewayRouterFunctions
                         .route(dir.toString())
-                        .GET("/directions", hostPredicate(dir.hosts()), directionsHandler::viewDirections)
+                        .path(dir.pathPrefix(), builder -> builder
+                                .GET("/directions", hostPredicate(dir.hosts()), directionsHandler::viewDirections))
                         .filter((request, next) -> next.handle(request))
                         .build();
             };
