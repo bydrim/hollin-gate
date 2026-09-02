@@ -9,11 +9,11 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 @Component
-public class DirectionsHandler {
+public class DirectionRequestHandler {
     private final TemplateEngine templateEngine;
     private final GatewayConfig gatewayConfig;
 
-    public DirectionsHandler(TemplateEngine templateEngine,  GatewayConfig gatewayConfig) {
+    public DirectionRequestHandler(TemplateEngine templateEngine, GatewayConfig gatewayConfig) {
         this.templateEngine = templateEngine;
         this.gatewayConfig = gatewayConfig;
     }

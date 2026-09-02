@@ -1,6 +1,7 @@
 package com.bydrim.hollingate.configs;
 
-import com.bydrim.hollingate.requesthandlers.DirectionsHandler;
+import com.bydrim.hollingate.requesthandlers.DirectionRequestHandler;
+import com.bydrim.hollingate.requesthandlers.TrackerRequestHandler;
 import org.springframework.cloud.gateway.server.mvc.filter.BeforeFilterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
@@ -20,9 +21,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Configuration
-public class RouteConfig {
+public class RouterConfig {
     @Bean
-    public RouterFunction<ServerResponse> routerFunction(GatewayConfig gatewayConfig, DirectionsHandler directionsHandler) {
+    public RouterFunction<ServerResponse> routerFunction(
+            GatewayConfig gatewayConfig, DirectionRequestHandler directionHandler,
+            TrackerRequestHandler trackerHandler) {
         if (gatewayConfig.directions().isEmpty()) {
             return req -> Optional.empty();
         }
@@ -77,7 +80,8 @@ public class RouteConfig {
                 case SELF -> GatewayRouterFunctions
                         .route(dir.toString())
                         .path(dir.pathPrefix(), builder -> builder
-                                .GET("/directions", hostPredicate(dir.hosts()), directionsHandler::viewDirections))
+                                .GET("/directions", hostPredicate(dir.hosts()), directionHandler::viewDirections)
+                                .GET("/trackers", hostPredicate(dir.hosts()), trackerHandler::viewTrackers))
                         .filter((request, next) -> next.handle(request))
                         .build();
             };
