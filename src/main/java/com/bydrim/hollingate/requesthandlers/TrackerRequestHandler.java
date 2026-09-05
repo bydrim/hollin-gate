@@ -6,6 +6,8 @@ import com.bydrim.hollingate.services.TrackerService;
 import gg.jte.TemplateEngine;
 import gg.jte.TemplateOutput;
 import gg.jte.output.StringOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
@@ -19,6 +21,7 @@ import java.util.Optional;
 
 @Component
 public class TrackerRequestHandler {
+    private static final Logger logger = LoggerFactory.getLogger(TrackerRequestHandler.class);
     private final TemplateEngine templateEngine;
     private final TrackerService trackerService;
 
@@ -56,5 +59,11 @@ public class TrackerRequestHandler {
         } catch (TooManyTrialException e) {
             return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
+    }
+
+    public ServerResponse deleteTracker(ServerRequest req) {
+        String id = req.pathVariable("id");
+        trackerService.delete(id);
+        return ServerResponse.ok().body("deleted");
     }
 }

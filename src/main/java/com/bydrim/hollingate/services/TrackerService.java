@@ -62,4 +62,8 @@ public class TrackerService {
     public List<Tracker> findLast(long count) {
         return trackerRepository.findLast(count);
     }
+
+    public void delete(String id) {
+        trackerRepository.deleteById(id);
+    }
 }

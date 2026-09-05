@@ -80,7 +80,8 @@ public class RouterConfig {
                                 .GET("/trackers", hostPredicate(dir.hosts()), trackerHandler::viewTrackers)
                                 .POST("/trackers",
                                         hostPredicate(dir.hosts()).and(RequestPredicates.accept(MediaType.APPLICATION_FORM_URLENCODED)),
-                                        trackerHandler::createTracker))
+                                        trackerHandler::createTracker)
+                                .DELETE("/trackers/{id}", hostPredicate(dir.hosts()), trackerHandler::deleteTracker))
                         .filter((request, next) -> next.handle(request))
                         .build();
             };
