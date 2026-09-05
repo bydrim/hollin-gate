@@ -9,10 +9,8 @@ import org.springframework.cloud.gateway.server.mvc.predicate.GatewayRequestPred
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileUrlResource;
-import org.springframework.web.servlet.function.RequestPredicate;
-import org.springframework.web.servlet.function.RouterFunction;
-import org.springframework.web.servlet.function.ServerRequest;
-import org.springframework.web.servlet.function.ServerResponse;
+import org.springframework.http.MediaType;
+import org.springframework.web.servlet.function.*;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -32,7 +30,7 @@ public class RouterConfig {
 
         RouterFunction<ServerResponse> result = null;
         for (GatewayConfig.Direction dir : gatewayConfig.directions()) {
-            RouterFunction<ServerResponse> router = switch(dir.type()) {
+            RouterFunction<ServerResponse> router = switch (dir.type()) {
                 case STATIC -> GatewayRouterFunctions
                         .route(dir.toString())
                         .resources((ServerRequest req) -> {
@@ -52,12 +50,10 @@ public class RouterConfig {
                                 File requestedFile = Path.of(dir.target(), req.uri().getPath()).toFile();
                                 if (!requestedFile.exists()) {
                                     return Optional.empty();
-                                }
-                                else if (requestedFile.isDirectory()) {
+                                } else if (requestedFile.isDirectory()) {
                                     // req = BeforeFilterFunctions.rewritePath("(?<segment>.*[^/])", "${segment}/index.html").apply(req);
                                     return Optional.of(new FileUrlResource(requestedFile.toPath().resolve("index.html").toUri().toURL()));
-                                }
-                                else {
+                                } else {
                                     return Optional.of(new FileUrlResource(requestedFile.toURI().toURL()));
                                 }
                             } catch (MalformedURLException e) {
@@ -81,7 +77,10 @@ public class RouterConfig {
                         .route(dir.toString())
                         .path(dir.pathPrefix(), builder -> builder
                                 .GET("/directions", hostPredicate(dir.hosts()), directionHandler::viewDirections)
-                                .GET("/trackers", hostPredicate(dir.hosts()), trackerHandler::viewTrackers))
+                                .GET("/trackers", hostPredicate(dir.hosts()), trackerHandler::viewTrackers)
+                                .POST("/trackers",
+                                        hostPredicate(dir.hosts()).and(RequestPredicates.accept(MediaType.APPLICATION_FORM_URLENCODED)),
+                                        trackerHandler::createTracker))
                         .filter((request, next) -> next.handle(request))
                         .build();
             };
@@ -96,6 +95,7 @@ public class RouterConfig {
      * This implementation exists because 'RequestParameters.host' method tests using org.springframework.web.util.pattern.PathPattern
      * and in that style there is no way to tell 'match all paths'. In that style, one has to include a path separator at least
      * and host names like 'localhost:8080' can never be expressed in 'match all paths' string.
+     *
      * @param host
      * @return
      */
