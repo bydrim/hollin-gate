@@ -16,6 +16,8 @@ import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,12 +50,13 @@ public class TrackerRequestHandler {
             if (desc.isEmpty()) {
                 return ServerResponse.badRequest().body("Error: Description of a Tracker cannot be empty!");
             }
-            Tracker createdTracker = trackerService.saveNewTracker(desc.get());
+            Tracker createdTracker = trackerService.saveNewTracker(URLDecoder.decode(desc.get(), StandardCharsets.UTF_8));
 
             List<Tracker> trackers = trackerService.listTrackers();
             TemplateOutput output = new StringOutput();
             templateEngine.render("trackers.jte", trackers, output);
-            return ServerResponse.created(req.uri().resolve(createdTracker.getId())).header("content-type", "text/html").body(output.toString());
+            return ServerResponse.created(req.uri().resolve(createdTracker.getId()))
+                    .header("content-type", "text/html").body(output.toString());
         } catch (IOException e) {
             return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         } catch (TooManyTrialException e) {
