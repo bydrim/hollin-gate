@@ -2,9 +2,7 @@
 @import com.bydrim.hollingate.entities.Tracker
 @param List<Tracker> trackers
 
-<!DOCTYPE html>
-<html>
-<body>
+@template.layouts.default(content = @`
 <form method="post">
     <fieldset>
         <legend>Create new Tracker</legend>
@@ -47,5 +45,4 @@
         }
     }
 </script>
-</body>
-</html>
+`)

@@ -2,14 +2,21 @@
 @import com.bydrim.hollingate.configs.GatewayConfig
 @param List<GatewayConfig.Direction> directions
 
-<!DOCTYPE html>
-<html>
-<body>
-<p>Hello World!</p>
-<ul>
-    @for(GatewayConfig.Direction dir : directions)
-        <li>${String.join(", ", dir.hosts())} - ${dir.target()}</li>
-    @endfor
-</ul>
-</body>
-</html>
+@template.layouts.default(content = @`
+    <table>
+        <tr>
+            <th>type</th>
+            <th>hosts</th>
+            <th>path prefix</th>
+            <th>target</th>
+        </tr>
+        @for(GatewayConfig.Direction dir : directions)
+            <tr>
+                <td>${dir.type()}</td>
+                <td>${String.join("\n", dir.hosts())}</td>
+                <td>${dir.pathPrefix()}</td>
+                <td>${dir.target()}</td>
+            </tr>
+        @endfor
+    </table>
+`)
