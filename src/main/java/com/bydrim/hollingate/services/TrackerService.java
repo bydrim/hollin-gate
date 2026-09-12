@@ -6,11 +6,11 @@ import com.bydrim.hollingate.exceptions.TooManyTrialException;
 import com.bydrim.hollingate.repositories.TrackerRepository;
 import com.bydrim.hollingate.repositories.TrackerTriggerRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -63,7 +63,9 @@ public class TrackerService {
         return trackerRepository.findLast(count);
     }
 
+    @Transactional
     public void delete(String id) {
-        trackerRepository.deleteById(id);
+        trackerTriggerRepository.deleteByTrackerEfficiently(id);
+        trackerRepository.deleteEfficiently(id);
     }
 }
