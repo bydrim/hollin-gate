@@ -28,7 +28,7 @@
             <td>${tracker.getCreateDate() == null ? "-" : tracker.getCreateDate().toString()}</td>
             <td>${tracker.getLastTriggerDate() == null ? "-" : tracker.getLastTriggerDate().toString()}</td>
             <td>
-                <button onclick="deleteTracker('${tracker.getId()}')">Delete</button>
+                <button onclick="deleteTracker('${tracker.getId()}')">Delete ${tracker.getId()}</button>
             </td>
         </tr>
     @endfor
