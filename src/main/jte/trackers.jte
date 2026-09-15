@@ -23,7 +23,7 @@
     </tr>
     @for(Tracker tracker : trackers)
         <tr>
-            <td>${tracker.getId()}</td>
+            <td><a href="trackers/${tracker.getId()}">${tracker.getId()}</a></td>
             <td>${tracker.getDescription()}</td>
             <td>${tracker.getCreateDate() == null ? "-" : tracker.getCreateDate().toString()}</td>
             <td>${tracker.getLastTriggerDate() == null ? "-" : tracker.getLastTriggerDate().toString()}</td>

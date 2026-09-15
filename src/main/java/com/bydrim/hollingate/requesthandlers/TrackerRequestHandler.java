@@ -1,6 +1,7 @@
 package com.bydrim.hollingate.requesthandlers;
 
 import com.bydrim.hollingate.entities.Tracker;
+import com.bydrim.hollingate.entities.TrackerTrigger;
 import com.bydrim.hollingate.exceptions.TooManyTrialException;
 import com.bydrim.hollingate.services.TrackerService;
 import gg.jte.TemplateEngine;
@@ -18,7 +19,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -62,6 +65,22 @@ public class TrackerRequestHandler {
         } catch (TooManyTrialException e) {
             return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
+    }
+
+    public ServerResponse viewTracker(ServerRequest req) {
+        String trackerId = req.pathVariable("id");
+        Optional<Tracker> oTracker = trackerService.findById(trackerId);
+        if(oTracker.isEmpty()) {
+            return ServerResponse.notFound().build();
+        }
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("tracker", oTracker.get());
+        List<TrackerTrigger> triggers = trackerService.listTriggers(trackerId);
+        params.put("triggers", triggers);
+        TemplateOutput output = new StringOutput();
+        templateEngine.render("tracker.jte", params, output);
+        return ServerResponse.ok().header("content-type", "text/html").body(output.toString());
     }
 
     public ServerResponse deleteTracker(ServerRequest req) {

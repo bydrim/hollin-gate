@@ -8,9 +8,11 @@ import com.bydrim.hollingate.repositories.TrackerTriggerRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URL;
 import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -55,12 +57,34 @@ public class TrackerService {
         throw new TooManyTrialException("Could not create a unique id for Tracker after 10 try!");
     }
 
+    public Optional<TrackerTrigger> saveNewTrigger(String triggerId, URL url) {
+        Tracker tracker = new Tracker();
+        tracker.setId(triggerId);
+        return saveNewTrigger(tracker, url);
+    }
+
+    public Optional<TrackerTrigger> saveNewTrigger(Tracker tracker, URL url) {
+        if(null == tracker || !hasTracker(tracker.getId())) return Optional.empty();
+        TrackerTrigger trigger = new TrackerTrigger(tracker, OffsetDateTime.now(), url);
+        return Optional.of(trackerTriggerRepository.save(trigger));
+    }
+
     public boolean isEmpty() {
         return trackerRepository.count() == 0;
     }
 
     public List<Tracker> findLast(long count) {
         return trackerRepository.findLast(count);
+    }
+
+    public Optional<Tracker> findById(String id) {
+        if(null == id || id.isBlank()) return Optional.empty();
+        return trackerRepository.findById(id);
+    }
+
+    public boolean hasTracker(String id) {
+        if(null == id || id.isBlank()) return false;
+        return trackerRepository.existsById(id);
     }
 
     @Transactional

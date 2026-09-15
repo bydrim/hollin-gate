@@ -10,6 +10,8 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.net.URI;
+
 @Configuration
 public class Startup {
     private static final Logger logger = LoggerFactory.getLogger(Startup.class);
@@ -18,9 +20,13 @@ public class Startup {
     public CommandLineRunner addRunner(TrackerService trackerService) {
         return (String[] args) -> {
             if(trackerService.isEmpty()) {
-                trackerService.saveNewTracker("Test-1 tracker");
-                trackerService.saveNewTracker("Test-2 tracker");
-                logger.info("Created 2 test trackers.");
+                Tracker t1 = trackerService.saveNewTracker("Test-1 tracker");
+                Tracker t2 = trackerService.saveNewTracker("Test-2 tracker");
+
+                trackerService.saveNewTrigger(t1, new URI("http://test-1.com").toURL());
+                trackerService.saveNewTrigger(t2, new URI("http://test-2.com").toURL());
+
+                logger.info("Created 2 test trackers and a single trigger for each tracker.");
             }
         };
     }
