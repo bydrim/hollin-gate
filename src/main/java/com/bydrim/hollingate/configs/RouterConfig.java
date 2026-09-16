@@ -98,10 +98,10 @@ public class RouterConfig {
      * and in that style there is no way to tell 'match all paths'. In that style, one has to include a path separator at least
      * and host names like 'localhost:8080' can never be expressed in 'match all paths' string.
      *
-     * @param host
+     * @param hosts
      * @return
      */
-    private RequestPredicate hostPredicate(List<String> hosts) {
+    private static RequestPredicate hostPredicate(List<String> hosts) {
         if (null == hosts || hosts.isEmpty() || hosts.stream().anyMatch(h -> h.isBlank() || h.equals("**"))) {
             return req -> true;
         }
