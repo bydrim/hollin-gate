@@ -19,13 +19,14 @@ public class Startup {
     @Bean
     public CommandLineRunner addRunner(TrackerService trackerService) {
         return (String[] args) -> {
-            if(trackerService.isEmpty()) {
+            if (trackerService.isEmpty()) {
                 Tracker t1 = trackerService.saveNewTracker("Test-1 tracker");
                 Tracker t2 = trackerService.saveNewTracker("Test-2 tracker");
 
                 trackerService.saveNewTrigger(t1, new URI("http://test-1.com").toURL());
                 trackerService.saveNewTrigger(t2, new URI("http://test-2.com").toURL());
 
+                Logger logger = LoggerFactory.getLogger(CommandLineRunner.class);
                 logger.info("Created 2 test trackers and a single trigger for each tracker.");
             }
         };
@@ -35,6 +36,7 @@ public class Startup {
     public ApplicationListener<ApplicationReadyEvent> addListener(
             GatewayConfig gatewayConfig, TrackerService trackerService) {
         return (ApplicationReadyEvent event) -> {
+            Logger logger = LoggerFactory.getLogger(ApplicationListener.class);
             logger.info("hollin-gate.yaml gateway config:\n{}", gatewayConfig);
             logger.info("Last 3 tracker: \n{}", String.join("\n", trackerService.findLast(3).stream().map(Tracker::toString).toList()));
         };
