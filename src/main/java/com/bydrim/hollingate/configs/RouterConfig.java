@@ -2,6 +2,9 @@ package com.bydrim.hollingate.configs;
 
 import com.bydrim.hollingate.requesthandlers.DirectionRequestHandler;
 import com.bydrim.hollingate.requesthandlers.TrackerRequestHandler;
+import com.bydrim.hollingate.services.TrackerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.server.mvc.filter.BeforeFilterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
@@ -10,20 +13,26 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileUrlResource;
 import org.springframework.http.MediaType;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.function.*;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 @Configuration
 public class RouterConfig {
+    private static final Logger logger = LoggerFactory.getLogger(RouterConfig.class);
+
     @Bean
     public RouterFunction<ServerResponse> routerFunction(
             GatewayConfig gatewayConfig, DirectionRequestHandler directionHandler,
-            TrackerRequestHandler trackerHandler) {
+            TrackerRequestHandler trackerHandler, ExecutorService executorService,
+            TrackerService trackerService) {
         if (gatewayConfig.directions().isEmpty()) {
             return req -> Optional.empty();
         }
@@ -60,7 +69,7 @@ public class RouterConfig {
                                 return Optional.empty();
                             }
                         })
-                        .filter((request, next) -> next.handle(request))
+                        .filter(trackerFilter(executorService, trackerService))
                         .build();
                 case PROXY -> {
                     String pathGlob = Path.of(dir.pathPrefix(), "/**").toString();
@@ -70,7 +79,7 @@ public class RouterConfig {
                             .route(hostPredicate(dir.hosts()).and(GatewayRequestPredicates.path(pathGlob)), HandlerFunctions.http())
                             .before(BeforeFilterFunctions.uri(dir.target()))
                             .before(BeforeFilterFunctions.rewritePath(rewriteRegexp, "${segment}"))
-                            .filter((request, next) -> next.handle(request))
+                            .filter(trackerFilter(executorService, trackerService))
                             .build();
                 }
                 case SELF -> GatewayRouterFunctions
@@ -83,7 +92,7 @@ public class RouterConfig {
                                         trackerHandler::createTracker)
                                 .GET("/trackers/{id}", hostPredicate(dir.hosts()), trackerHandler::viewTracker)
                                 .DELETE("/trackers/{id}", hostPredicate(dir.hosts()), trackerHandler::deleteTracker))
-                        .filter((request, next) -> next.handle(request))
+                        .filter(trackerFilter(executorService, trackerService))
                         .build();
             };
 
@@ -106,5 +115,30 @@ public class RouterConfig {
             return req -> true;
         }
         return GatewayRequestPredicates.host(hosts.toArray(String[]::new));
+    }
+
+    /**
+     * creates a filter function which copies the url and query params from the request and
+     * in a new thread processes the tracker id.
+     *
+     * @param execService
+     * @param trackerService
+     * @return HandlerFilterFunction
+     */
+    private static HandlerFilterFunction<ServerResponse, ServerResponse> trackerFilter(
+            ExecutorService execService, TrackerService trackerService) {
+        return (req, next) -> {
+            URI uri = req.uri();
+            MultiValueMap<String, String> params = req.params();
+            execService.submit(() -> {
+                try {
+                    String trackerId = params.getFirst("tid");
+                    trackerService.saveNewTrigger(trackerId, uri.toURL());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            return next.handle(req);
+        };
     }
 }

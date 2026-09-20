@@ -31,13 +31,13 @@
             <th>url</th>
             <th>date</th>
         </tr>
-        <tr>
-            @for(TrackerTrigger trigger : triggers)
+        @for(TrackerTrigger trigger : triggers)
+            <tr>
                 <td>${trigger.getId()}</td>
                 <td>${trigger.getTriggerUrl().toString()}</td>
                 <td>${trigger.getTriggerDate().toString()}</td>
-            @endfor
-        </tr>
+            </tr>
+        @endfor
     </table>
     <script>
         async function deleteTracker(id) {

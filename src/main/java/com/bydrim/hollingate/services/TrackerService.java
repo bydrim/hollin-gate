@@ -38,6 +38,7 @@ public class TrackerService {
      * 3 bytes = 4 letters
      * 3 * 8 = 4 * 6
      * byte = 2^8 / base64 = 2^6
+     *
      * @return randomly generated 4 characters sized string
      */
     private String rndId() {
@@ -47,7 +48,7 @@ public class TrackerService {
     }
 
     public Tracker saveNewTracker(String description) throws TooManyTrialException {
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
             String newId = rndId();
             if (trackerRepository.existsById(newId)) {
                 continue;
@@ -57,14 +58,14 @@ public class TrackerService {
         throw new TooManyTrialException("Could not create a unique id for Tracker after 10 try!");
     }
 
-    public Optional<TrackerTrigger> saveNewTrigger(String triggerId, URL url) {
+    public Optional<TrackerTrigger> saveNewTrigger(String trackerId, URL url) {
         Tracker tracker = new Tracker();
-        tracker.setId(triggerId);
+        tracker.setId(trackerId);
         return saveNewTrigger(tracker, url);
     }
 
     public Optional<TrackerTrigger> saveNewTrigger(Tracker tracker, URL url) {
-        if(null == tracker || !hasTracker(tracker.getId())) return Optional.empty();
+        if (null == tracker || !hasTracker(tracker.getId())) return Optional.empty();
         TrackerTrigger trigger = new TrackerTrigger(tracker, OffsetDateTime.now(), url);
         return Optional.of(trackerTriggerRepository.save(trigger));
     }
@@ -78,12 +79,12 @@ public class TrackerService {
     }
 
     public Optional<Tracker> findById(String id) {
-        if(null == id || id.isBlank()) return Optional.empty();
+        if (null == id || id.isBlank()) return Optional.empty();
         return trackerRepository.findById(id);
     }
 
     public boolean hasTracker(String id) {
-        if(null == id || id.isBlank()) return false;
+        if (null == id || id.isBlank()) return false;
         return trackerRepository.existsById(id);
     }
 
