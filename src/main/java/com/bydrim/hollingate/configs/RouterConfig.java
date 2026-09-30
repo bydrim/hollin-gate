@@ -1,6 +1,7 @@
 package com.bydrim.hollingate.configs;
 
 import com.bydrim.hollingate.requesthandlers.DirectionRequestHandler;
+import com.bydrim.hollingate.requesthandlers.HomepageRequestHandler;
 import com.bydrim.hollingate.requesthandlers.NotFoundRequestHandler;
 import com.bydrim.hollingate.requesthandlers.TrackerRequestHandler;
 import com.bydrim.hollingate.services.TrackerService;
@@ -33,7 +34,7 @@ public class RouterConfig {
     public RouterFunction<ServerResponse> routerFunction(
             GatewayConfig gatewayConfig, DirectionRequestHandler directionHandler,
             TrackerRequestHandler trackerHandler, ExecutorService executorService,
-            TrackerService trackerService) {
+            TrackerService trackerService, HomepageRequestHandler homepageHandler) {
         if (gatewayConfig.directions().isEmpty()) {
             return req -> Optional.empty();
         }
@@ -92,7 +93,8 @@ public class RouterConfig {
                                         hostPredicate(dir.hosts()).and(RequestPredicates.accept(MediaType.APPLICATION_FORM_URLENCODED)),
                                         trackerHandler::createTracker)
                                 .GET("/trackers/{id}", hostPredicate(dir.hosts()), trackerHandler::viewTracker)
-                                .DELETE("/trackers/{id}", hostPredicate(dir.hosts()), trackerHandler::deleteTracker))
+                                .DELETE("/trackers/{id}", hostPredicate(dir.hosts()), trackerHandler::deleteTracker)
+                                .GET("/", hostPredicate(dir.hosts()), homepageHandler::viewHomepage))
                         .filter(trackerFilter(executorService, trackerService))
                         .build();
             };
