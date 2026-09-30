@@ -1,6 +1,7 @@
 package com.bydrim.hollingate.configs;
 
 import com.bydrim.hollingate.requesthandlers.DirectionRequestHandler;
+import com.bydrim.hollingate.requesthandlers.NotFoundHandler;
 import com.bydrim.hollingate.requesthandlers.TrackerRequestHandler;
 import com.bydrim.hollingate.services.TrackerService;
 import org.slf4j.Logger;
@@ -99,6 +100,7 @@ public class RouterConfig {
             result = result == null ? router : result.and(router);
         }
 
+        result = result.andRoute(req -> true, NotFoundHandler::viewNotFound);
         return result;
     }
 
