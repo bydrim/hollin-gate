@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
-public class NotFoundHandler {
+public class NotFoundRequestHandler {
     public static ServerResponse viewNotFound(ServerRequest req) {
         return ServerResponse.status(HttpStatus.NOT_FOUND).body("Not Found!");
     }
