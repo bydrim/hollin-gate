@@ -20,6 +20,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
@@ -133,11 +135,11 @@ public class RouterConfig {
     private static HandlerFilterFunction<ServerResponse, ServerResponse> trackerFilter(
             ExecutorService execService, TrackerService trackerService) {
         return (req, next) -> {
-            URI uri = req.uri();
-            MultiValueMap<String, String> params = req.params();
+            URI uri = req.uri(); // URIs are immutable, therefore no need to copy.
+            Map<String, String> params = req.params().toSingleValueMap(); // this returns a copy of values
             execService.submit(() -> {
                 try {
-                    String trackerId = params.getFirst("tid");
+                    String trackerId = params.computeIfAbsent("tid", _ -> "");
                     trackerService.saveNewTrigger(trackerId, uri.toURL());
                 } catch (Exception e) {
                     throw new RuntimeException(e);
