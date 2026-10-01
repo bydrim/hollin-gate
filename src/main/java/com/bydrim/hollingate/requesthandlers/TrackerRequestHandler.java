@@ -70,7 +70,7 @@ public class TrackerRequestHandler {
     public ServerResponse viewTracker(ServerRequest req) {
         String trackerId = req.pathVariable("id");
         Optional<Tracker> oTracker = trackerService.findById(trackerId);
-        if(oTracker.isEmpty()) {
+        if (oTracker.isEmpty()) {
             return ServerResponse.notFound().build();
         }
 

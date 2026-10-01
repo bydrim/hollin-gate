@@ -1,9 +1,6 @@
 package com.bydrim.hollingate.configs;
 
-import com.bydrim.hollingate.requesthandlers.DirectionRequestHandler;
-import com.bydrim.hollingate.requesthandlers.HomepageRequestHandler;
-import com.bydrim.hollingate.requesthandlers.NotFoundRequestHandler;
-import com.bydrim.hollingate.requesthandlers.TrackerRequestHandler;
+import com.bydrim.hollingate.requesthandlers.*;
 import com.bydrim.hollingate.services.TrackerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +31,8 @@ public class RouterConfig {
     public RouterFunction<ServerResponse> routerFunction(
             GatewayConfig gatewayConfig, DirectionRequestHandler directionHandler,
             TrackerRequestHandler trackerHandler, ExecutorService executorService,
-            TrackerService trackerService, HomepageRequestHandler homepageHandler) {
+            TrackerService trackerService, HomepageRequestHandler homepageHandler,
+            OnErrorHandler onErrorHandler) {
         if (gatewayConfig.directions().isEmpty()) {
             return req -> Optional.empty();
         }
@@ -72,6 +70,7 @@ public class RouterConfig {
                             }
                         })
                         .filter(trackerFilter(executorService, trackerService))
+                        .onError(Throwable.class, onErrorHandler::onError)
                         .build();
                 case PROXY -> {
                     String pathGlob = Path.of(dir.pathPrefix(), "/**").toString();
@@ -82,6 +81,7 @@ public class RouterConfig {
                             .before(BeforeFilterFunctions.uri(dir.target()))
                             .before(BeforeFilterFunctions.rewritePath(rewriteRegexp, "${segment}"))
                             .filter(trackerFilter(executorService, trackerService))
+                            .onError(Throwable.class, onErrorHandler::onError)
                             .build();
                 }
                 case SELF -> GatewayRouterFunctions
@@ -96,6 +96,7 @@ public class RouterConfig {
                                 .DELETE("/trackers/{id}", hostPredicate(dir.hosts()), trackerHandler::deleteTracker)
                                 .GET("/", hostPredicate(dir.hosts()), homepageHandler::viewHomepage))
                         .filter(trackerFilter(executorService, trackerService))
+                        .onError(Throwable.class, onErrorHandler::onErrorDetailed)
                         .build();
             };
 
