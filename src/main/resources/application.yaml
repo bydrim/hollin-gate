@@ -25,5 +25,8 @@ spring:
       ddl-auto: update
 gg:
   jte:
-        use-precompiled-templates: true
+    use-precompiled-templates: true
 #    development-mode: true
+logging:
+  file:
+    name: "./log/hollin-gate.log"
