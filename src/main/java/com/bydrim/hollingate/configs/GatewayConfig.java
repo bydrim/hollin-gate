@@ -40,8 +40,7 @@ public record GatewayConfig(List<Direction> directions) {
                 sb.append(" \"").append(hosts().get(i)).append('"');
                 if (i == hosts().size() - 1) {
                     sb.append(' ');
-                }
-                else {
+                } else {
                     sb.append(',');
                 }
             }
@@ -56,7 +55,7 @@ public record GatewayConfig(List<Direction> directions) {
         }
     }
 
-    public enum RouteType { STATIC, PROXY, SELF }
+    public enum RouteType {STATIC, PROXY, SELF}
 
     @Override
     public String toString() {
@@ -67,8 +66,7 @@ public record GatewayConfig(List<Direction> directions) {
             sb.append("\n\t\t").append(directions().get(i).toString());
             if (i == directions().size() - 1) {
                 sb.append('\n');
-            }
-            else {
+            } else {
                 sb.append(',');
             }
         }

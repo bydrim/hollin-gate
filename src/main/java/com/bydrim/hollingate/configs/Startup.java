@@ -14,10 +14,8 @@ import java.net.URI;
 
 @Configuration
 public class Startup {
-    private static final Logger logger = LoggerFactory.getLogger(Startup.class);
-
     @Bean
-    public CommandLineRunner addRunner(TrackerService trackerService) {
+    public CommandLineRunner getRunner(TrackerService trackerService) {
         return (String[] args) -> {
             if (trackerService.isEmpty()) {
                 Tracker t1 = trackerService.saveNewTracker("Test-1 tracker");
@@ -33,7 +31,7 @@ public class Startup {
     }
 
     @Bean
-    public ApplicationListener<ApplicationReadyEvent> addListener(
+    public ApplicationListener<ApplicationReadyEvent> getAppReadyListener(
             GatewayConfig gatewayConfig, TrackerService trackerService) {
         return (ApplicationReadyEvent event) -> {
             Logger logger = LoggerFactory.getLogger(ApplicationListener.class);

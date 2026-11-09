@@ -8,6 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan({"com.bydrim.hollingate.configs"})
 public class HollinGateApplication {
     public static void main(String[] args) {
-        SpringApplication.run(HollinGateApplication.class);
+        SpringApplication app = new SpringApplication(HollinGateApplication.class);
+        app.run(args);
     }
 }

@@ -1,0 +1,6 @@
+gg:
+  jte:
+    use-precompiled-templates: true
+logging:
+  file:
+    name: "/var/log/hollin-gate/hollin-gate.log"

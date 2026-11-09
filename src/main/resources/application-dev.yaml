@@ -1,0 +1,6 @@
+gg:
+  jte:
+    development-mode: true
+logging:
+  file:
+    name: "${appHome}/log/hollin-gate.log"

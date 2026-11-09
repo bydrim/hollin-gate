@@ -1,0 +1,20 @@
+gateway:
+  directions:
+    # - type: STATIC
+    #   # allowed hosts which the user creates a request against
+    #   hosts:
+    #     - "static.com"
+    #   # path-prefix: "/static"
+    #   target: "/path/to/static/project"
+    # - type: PROXY
+    #   hosts:
+    #     - "proxy.com"
+    #   # path-prefix: "/proxie"
+    #   target: "http://localhost:4040"
+    - type: SELF
+      hosts:
+        - "hollingate.com"
+        - "localhost:8080"
+      # path-prefix: ""
+      # 'target' is ignored in SELF
+

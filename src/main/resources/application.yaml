@@ -1,8 +1,8 @@
 spring:
   config:
-    import:
-      - "optional:file:./hollin-gate.yaml"
-      - "optional:file:/etc/hollin-gate/hollin-gate.yaml"
+    import: "file:${appHome}/hollin-gate.yaml"
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   application:
     name: hollin-gate
   main:
@@ -11,7 +11,7 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: "jdbc:sqlite:./hollin-gate.db"
+    url: "jdbc:sqlite:${appHome}/hollin-gate.db"
     driver-class-name: "org.sqlite.JDBC"
     username: sa
     password: sa
@@ -23,10 +23,3 @@ spring:
     database-platform: "org.hibernate.community.dialect.SQLiteDialect"
     hibernate:
       ddl-auto: update
-gg:
-  jte:
-    use-precompiled-templates: true
-#    development-mode: true
-logging:
-  file:
-    name: "./log/hollin-gate.log"

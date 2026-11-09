@@ -1,0 +1,15 @@
+when:
+  - event: manual
+
+# resolves as /woodpecker/hollin-gate for the build container
+workspace:
+  base: /woodpecker
+  path: hollin-gate
+
+steps:
+  - name: build
+    image: eclipse-temurin:25
+    commands:
+      - build.sh
+    volumes:
+      - /woodpecker-outputs/hollin-gate:/woodpecker/hollin-gate/timestamped-build
