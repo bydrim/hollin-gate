@@ -42,7 +42,7 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-ExecStart=java -Dspring.profiles.active=prod -jar "$jar_loc"
+ExecStart=java -Xms512M -Xmx512M -XX:+UseG1GC -Dspring.profiles.active=prod -jar "$jar_loc"
 
 [Install]
 WantedBy=multi-user.target"
