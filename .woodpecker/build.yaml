@@ -10,6 +10,6 @@ steps:
   - name: build
     image: eclipse-temurin:25
     commands:
-      - build.sh
+      - ./build.sh
     volumes:
       - /woodpecker-outputs/hollin-gate:/woodpecker/hollin-gate/timestamped-build
