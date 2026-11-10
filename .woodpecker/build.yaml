@@ -13,3 +13,4 @@ steps:
       - ./build.sh
     volumes:
       - /woodpecker-outputs/hollin-gate:/woodpecker/hollin-gate/timestamped-build
+      - /woodpecker-outputs/m2-cache:/root/.m2
